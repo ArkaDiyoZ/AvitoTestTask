@@ -34,6 +34,15 @@ func main() {
 	router.POST("/users", func(context *gin.Context) {
 		handlers.AddUserHandler(context, userRepository)
 	})
+	router.POST("/users/:id/segments", func(context *gin.Context) {
+		handlers.AddUserToSegmentHandler(context, userRepository)
+	})
+	router.GET("/users/:id/segments", func(context *gin.Context) {
+		handlers.GetUserSegmentsHandler(context, userRepository)
+	})
+	router.DELETE("/users/:id/segments/slug", func(context *gin.Context) {
+		handlers.DeleteUserSegmentsHandler(context, userRepository)
+	})
 
 	router.Run(":8080")
 
