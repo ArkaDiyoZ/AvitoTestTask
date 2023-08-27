@@ -22,15 +22,15 @@ func (r *SegmentRepository) GetSegmentByID(id int) (*models.Segment, error) {
 	return &segment, nil
 }
 
-func (r *SegmentRepository) FindSegmentBySlug(slug string) (bool, error) {
+func (r *SegmentRepository) FindSegmentBySlug(slug string) bool {
 	var segment models.Segment
 	if err := r.db.Where("slug = ?", slug).Take(&segment).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false, nil
+			return false
 		}
-		return false, err
+		return false
 	}
-	return true, nil
+	return true
 }
 
 func (r *SegmentRepository) AddNewSegment(slug string) error {
