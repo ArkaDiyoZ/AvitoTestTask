@@ -62,6 +62,8 @@ func AddUserToSegmentHandler(c *gin.Context, userRepo *repository.UserRepository
 		return
 	}
 	//todo add check to empty segments array and mb to incorrect name in body
+	//todo check if this user already in this segment ( optional )
+	//todo log the errors !!!!!!
 
 	if err := userService.AddUserToSegment(userID, segments.Segment); err != nil {
 		c.JSON(http.StatusInternalServerError, "Failed to add user to segment")

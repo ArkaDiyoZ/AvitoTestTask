@@ -20,6 +20,7 @@ func main() {
 
 	userRepository := repository.NewUserRepository(db)
 	segmentRepository := repository.NewSegmentRepository(db)
+	historyRepository := repository.NewHistoryRepository(db)
 
 	router := gin.Default()
 	router.POST("/segments", func(context *gin.Context) {
@@ -42,6 +43,9 @@ func main() {
 	})
 	router.DELETE("/users/:id/segments/slug", func(context *gin.Context) {
 		handlers.DeleteUserSegmentsHandler(context, userRepository)
+	})
+	router.GET("/history", func(context *gin.Context) {
+		handlers.GenerateReportHandler(context, historyRepository)
 	})
 
 	router.Run(":8080")
