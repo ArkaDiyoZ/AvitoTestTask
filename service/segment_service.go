@@ -18,8 +18,7 @@ func (s *SegmentService) GetSegmentByID(id int) (*models.Segment, error) {
 }
 
 func (s *SegmentService) FindSegmentBySlug(slug string) bool {
-	ok, _ := s.repo.FindSegmentBySlug(slug)
-	return ok
+	return s.repo.FindSegmentBySlug(slug)
 }
 
 func (s *SegmentService) AddNewSegment(slug string) error {
