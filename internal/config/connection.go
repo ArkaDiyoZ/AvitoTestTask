@@ -2,31 +2,33 @@ package config
 
 import (
 	"fmt"
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"log"
-	"os"
 )
 
-func Connection(logger *log.Logger) *gorm.DB {
+type Config struct {
+	DBHost     string
+	DBPort     string
+	DBUsername string
+	DBPassword string
+	DBName     string
+}
 
-	errEnv := godotenv.Load()
+func Connection() *gorm.DB {
 
-	if errEnv != nil {
-		logger.Fatalf("Error loading .env file %v", errEnv.Error())
+	fg := Config{
+		DBHost:     "postgres",
+		DBPort:     "5432",
+		DBUsername: "postgres",
+		DBPassword: "postgres",
+		DBName:     "dynamic_segment_service_db",
 	}
 
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USERNAME")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
+	fmt.Printf("host=%s port=%s user=%s password=%s dbname=%s", fg.DBHost, fg.DBPort, fg.DBUsername, fg.DBPassword, fg.DBName)
 
-	fmt.Printf("host=%s port=%s user=%s password=%s dbname=%s", dbHost, dbPort, dbUser, dbPassword, dbName)
-
-	dbUrl := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
+	dbUrl := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", fg.DBHost, fg.DBPort, fg.DBUsername, fg.DBPassword, fg.DBName)
 	db, err := gorm.Open(postgres.Open(dbUrl), &gorm.Config{})
+
 	if err != nil {
 		panic(err)
 	}

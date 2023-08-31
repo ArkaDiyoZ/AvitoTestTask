@@ -1,16 +1,17 @@
-FROM golang:1.20 AS build
+FROM golang:1.20
 
-WORKDIR /app
+ENV GO111MODULE=on
+
+WORKDIR /service
 
 COPY go.mod go.sum ./
+
 RUN go mod download
 
 COPY . .
 
-RUN go build -o main /app/cmd/main/main.go
+WORKDIR /service/cmd
 
-FROM debian:buster-slim
+RUN go build -o main .
 
-COPY --from=build /app/main /app/main
-
-CMD ["/app/main"]
+CMD ["./main"]

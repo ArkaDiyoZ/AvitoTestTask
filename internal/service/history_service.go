@@ -30,7 +30,6 @@ func (s *HistoryService) GenerateReport(start time.Time, end time.Time) (string,
 	defer func(file *os.File) {
 		err := file.Close()
 		if err != nil {
-
 		}
 	}(file)
 

@@ -1,14 +1,21 @@
-package handlers
+package history
 
 import (
-	"DynamicUserSegmentationService/internal/repository"
 	"DynamicUserSegmentationService/internal/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
 )
 
-func GenerateReportHandler(c *gin.Context, historyRepo *repository.HistoryRepository) {
+type Handler struct {
+	historyService *service.HistoryService
+}
+
+func NewHandler(historyService *service.HistoryService) Handler {
+	return Handler{historyService: historyService}
+}
+
+func (h Handler) GenerateReportHandler(c *gin.Context) {
 	startParam := c.Query("start")
 	endParam := c.Query("end")
 
@@ -24,8 +31,7 @@ func GenerateReportHandler(c *gin.Context, historyRepo *repository.HistoryReposi
 		return
 	}
 
-	historyService := service.NewHistoryService(historyRepo)
-	reportFilePath, err := historyService.GenerateReport(start, end)
+	reportFilePath, err := h.historyService.GenerateReport(start, end)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, "Failed to generate report")
 		return

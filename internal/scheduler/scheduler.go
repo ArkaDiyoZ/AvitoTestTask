@@ -2,12 +2,13 @@ package scheduler
 
 import (
 	"DynamicUserSegmentationService/internal/repository"
+	"context"
 	"fmt"
 	"log"
 	"time"
 )
 
-func StartSegmentCleanupRoutine(userRepo *repository.UserRepository, logger *log.Logger) {
+func StartSegmentCleanupRoutine(ctx context.Context, userRepo *repository.UserRepository, logger *log.Logger) {
 	ticker := time.NewTicker(1 * time.Hour)
 	defer ticker.Stop()
 
@@ -19,6 +20,8 @@ func StartSegmentCleanupRoutine(userRepo *repository.UserRepository, logger *log
 			if err := userRepo.DeleteExpiredUserSegments(currentTime); err != nil {
 				fmt.Errorf("shceduler delete error", err)
 			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }
