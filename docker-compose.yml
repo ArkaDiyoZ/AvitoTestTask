@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: segments_database
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dynamic_segment_service_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./database/database_scripts/dataBaseCreate.sql:/docker-entrypoint-initdb.d/dataBaseCreate.sql
+  myapp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres

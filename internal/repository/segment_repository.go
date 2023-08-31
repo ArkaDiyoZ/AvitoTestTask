@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"DynamicUserSegmentationService/models"
+	"DynamicUserSegmentationService/internal/models"
 	"errors"
 	"gorm.io/gorm"
 )

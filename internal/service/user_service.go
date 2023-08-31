@@ -1,8 +1,9 @@
 package service
 
 import (
+	"DynamicUserSegmentationService/internal/models"
 	"DynamicUserSegmentationService/internal/repository"
-	"DynamicUserSegmentationService/models"
+	"time"
 )
 
 type UserService struct {
@@ -13,20 +14,20 @@ func NewUserService(repo *repository.UserRepository) *UserService {
 	return &UserService{repo: repo}
 }
 
-func (s *UserService) GetUserByID(id int) (*models.User, error) {
+func (s *UserService) GetUserByID(id int) (models.User, error) {
 	return s.repo.GetUserByID(id)
 }
 
-func (s *UserService) AddUser(name string) error {
-	return s.repo.AddUser(name)
+func (s *UserService) AddUser(user models.User) error {
+	return s.repo.AddUser(user.Name)
 }
 
-func (s *UserService) FindUserById(id int) bool {
-	return s.repo.FindUserById(id)
+func (s *UserService) UserExist(id int) (bool, error) {
+	return s.repo.UserExist(id)
 }
 
-func (s *UserService) AddUserToSegment(id int, segments []string) error {
-	return s.repo.AddUserToSegment(id, segments)
+func (s *UserService) AddUserToSegment(userId int, segments []string, expirationTime time.Time) error {
+	return s.repo.AddUserToSegment(userId, segments, expirationTime)
 }
 
 func (s *UserService) GetUserSegments(id int) ([]models.Segment, error) {

@@ -11,6 +11,7 @@ CREATE TABLE segments (
 CREATE TABLE user_segments (
                         user_id INT REFERENCES users(id) ON DELETE CASCADE,
                         segment_id INT REFERENCES segments(id) ON DELETE CASCADE,
+                        expiration_time TIMESTAMPTZ DEFAULT NOW(),
                         PRIMARY KEY (user_id, segment_id)
 );
 

@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"DynamicUserSegmentationService/internal/repository"
-	"DynamicUserSegmentationService/service"
+	"DynamicUserSegmentationService/internal/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"

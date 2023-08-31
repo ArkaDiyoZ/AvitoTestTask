@@ -1,13 +1,19 @@
 package handlers
 
 import (
+	"DynamicUserSegmentationService/internal/models"
 	"DynamicUserSegmentationService/internal/repository"
-	"DynamicUserSegmentationService/models"
-	"DynamicUserSegmentationService/service"
+	"DynamicUserSegmentationService/internal/service"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"time"
 )
+
+type SegmentsRequest struct {
+	Segment        []string  `json:"segments"`
+	ExpirationTime time.Time `json:"expiration_time"`
+}
 
 func GetUserHandler(c *gin.Context, userRepo *repository.UserRepository) {
 	userIdParam := c.Param("id")
@@ -16,7 +22,7 @@ func GetUserHandler(c *gin.Context, userRepo *repository.UserRepository) {
 	userService := service.NewUserService(userRepo)
 	user, err := userService.GetUserByID(userID)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failed to get user")
+		c.String(http.StatusNotFound, "Failed to get user")
 		return
 	}
 
@@ -32,7 +38,7 @@ func AddUserHandler(c *gin.Context, userRepo *repository.UserRepository) {
 	}
 
 	userService := service.NewUserService(userRepo)
-	if err := userService.AddUser(user.Name); err != nil {
+	if err := userService.AddUser(user); err != nil {
 		c.String(http.StatusInternalServerError, "Failed to add user")
 		return
 	}
@@ -51,21 +57,18 @@ func AddUserToSegmentHandler(c *gin.Context, userRepo *repository.UserRepository
 
 	userService := service.NewUserService(userRepo)
 
-	if userService.FindUserById(userID) != true {
+	if !userService.UserExist(userID) {
 		c.JSON(http.StatusNotFound, "User not found")
 		return
 	}
 
-	var segments = models.SegmentsRequest{}
+	var segments = SegmentsRequest{} // убрать в хендлер из модели
 	if err := c.ShouldBindJSON(&segments); err != nil {
 		c.JSON(http.StatusBadRequest, "Invalid data")
 		return
 	}
-	//todo add check to empty segments array and mb to incorrect name in body
-	//todo check if this user already in this segment ( optional )
-	//todo log the errors !!!!!!
 
-	if err := userService.AddUserToSegment(userID, segments.Segment); err != nil {
+	if err := userService.AddUserToSegment(userID, segments.Segment, segments.ExpirationTime); err != nil {
 		c.JSON(http.StatusInternalServerError, "Failed to add user to segment")
 		return
 	}
@@ -81,7 +84,7 @@ func GetUserSegmentsHandler(c *gin.Context, userRepo *repository.UserRepository)
 	}
 
 	userService := service.NewUserService(userRepo)
-	if userService.FindUserById(userID) != true {
+	if !userService.UserExist(userID) {
 		c.JSON(http.StatusNotFound, "User not found")
 		return
 	}
@@ -105,12 +108,12 @@ func DeleteUserSegmentsHandler(c *gin.Context, userRepo *repository.UserReposito
 
 	userService := service.NewUserService(userRepo)
 
-	if userService.FindUserById(userID) != true {
+	if !userService.UserExist(userID) {
 		c.JSON(http.StatusNotFound, "User not found")
 		return
 	}
 
-	var segments = models.SegmentsRequest{}
+	var segments = SegmentsRequest{}
 	if err := c.ShouldBindJSON(&segments); err != nil {
 		c.JSON(http.StatusBadRequest, "Invalid data")
 		return

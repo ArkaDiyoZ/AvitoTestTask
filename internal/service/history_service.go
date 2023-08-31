@@ -42,7 +42,7 @@ func (s *HistoryService) GenerateReport(start time.Time, end time.Time) (string,
 			strconv.Itoa(record.UserID),
 			strconv.Itoa(record.SegmentID),
 			record.Operation,
-			record.Timestamp.Format("2006-01-02 15:04:05"),
+			record.CreatedTime.Format("2006-01-02 15:04:05"),
 		}
 		if err := writer.Write(row); err != nil {
 			return "", err

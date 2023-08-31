@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"DynamicUserSegmentationService/models"
+	"DynamicUserSegmentationService/internal/models"
 	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"time"
 )
@@ -15,36 +16,56 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db}
 }
 
-func (r *UserRepository) GetUserByID(id int) (*models.User, error) {
+func (r *UserRepository) GetUserByID(id int) (models.User, error) {
 	var user models.User
 	if err := r.db.First(&user, id).Error; err != nil {
-		return nil, err
+		return user, err
 	}
-	return &user, nil
+	return user, nil
 }
 
 func (r *UserRepository) AddUser(name string) error {
-	user := models.User{Name: name}
-	if err := r.db.Create(&user).Error; err != nil {
+	exists, err := r.CheckUserExists(name)
+	if err != nil {
 		return err
+	}
+	if exists {
+		return fmt.Errorf("user already exists", err)
+	}
+
+	user := models.User{
+		Name: name,
+	}
+	if err := r.db.Create(&user).Error; err != nil {
+		return fmt.Errorf("user creation error", err)
 	}
 	return nil
 }
 
-func (r *UserRepository) FindUserById(id int) bool {
+func (r *UserRepository) CheckUserExists(name string) (bool, error) {
+	var count int64
+	if err := r.db.Model(&models.User{}).Where("name = ?", name).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (r *UserRepository) UserExist(id int) (bool, error) {
 	var user models.User
 	if err := r.db.Where("id = ?", id).Take(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return false
+			return false, err
 		}
-		return false
+		return false, err
 	}
-	return true
+	return true, nil
 }
 
-func (r *UserRepository) AddUserToSegment(id int, segmentsSlugs []string) error {
+func (r *UserRepository) AddUserToSegment(userId int, segmentsSlugs []string, expirationTime time.Time) error {
 	var user models.User
-	if err := r.db.First(&user, id).Error; err != nil {
+	var defaultExpirationTime = time.Date(1099, time.December, 31, 23, 59, 59, 0, time.UTC)
+
+	if err := r.db.First(&user, userId).Error; err != nil {
 		return err
 	}
 
@@ -56,18 +77,19 @@ func (r *UserRepository) AddUserToSegment(id int, segmentsSlugs []string) error 
 	var existingSegments []models.Segment
 	if err := r.db.Where("slug IN ?", segmentsSlugs).Find(&existingSegments).Error; err != nil {
 		return err
-	}
+	} //подумать зачем это
 
-	if len(existingSegments) != len(segmentsSlugs) {
-		return errors.New("not all segments exist")
+	if expirationTime.IsZero() {
+		expirationTime = defaultExpirationTime
 	}
 
 	transaction := r.db.Begin() // Начать транзакцию
 
-	for _, segment := range existingSegments {
+	for _, segment := range existingSegments { // батч вместо цикла
 		userSegment := models.UserSegment{
-			UserID:    id,
-			SegmentID: segment.ID,
+			UserID:         userId,
+			SegmentID:      segment.ID,
+			ExpirationTime: expirationTime,
 		}
 
 		if err := transaction.Create(&userSegment).Error; err != nil {
@@ -77,18 +99,18 @@ func (r *UserRepository) AddUserToSegment(id int, segmentsSlugs []string) error 
 
 		// Создать запись в таблице истории
 		historyRecord := models.History{
-			UserID:    id,
-			SegmentID: segment.ID,
-			Operation: "user adding segments",
-			Timestamp: time.Now(),
+			UserID:      userId,
+			SegmentID:   segment.ID,
+			Operation:   "user adding segments",
+			CreatedTime: time.Now(),
 		}
 		if err := transaction.Table("history").Create(&historyRecord).Error; err != nil {
-			transaction.Rollback() // Откатить транзакцию при ошибке
+			transaction.Rollback()
 			return err
 		}
 	}
 
-	transaction.Commit() // Подтвердить транзакцию
+	transaction.Commit()
 
 	return nil
 }
@@ -171,10 +193,10 @@ func (r *UserRepository) DeleteUserSegments(id int, segmentsSlugs []string) erro
 
 	for _, segmentID := range segmentIDs {
 		historyRecord := models.History{
-			UserID:    id,
-			SegmentID: segmentID,
-			Operation: "user removing segment",
-			Timestamp: time.Now(),
+			UserID:      id,
+			SegmentID:   segmentID,
+			Operation:   "user removing segment",
+			CreatedTime: time.Now(),
 		}
 		if err := transaction.Table("history").Create(&historyRecord).Error; err != nil {
 			transaction.Rollback()
@@ -183,4 +205,11 @@ func (r *UserRepository) DeleteUserSegments(id int, segmentsSlugs []string) erro
 	}
 
 	return transaction.Commit().Error
+}
+
+func (r *UserRepository) DeleteExpiredUserSegments(currentTime time.Time) error {
+	return r.db.
+		Where("expiration_time <= ?", currentTime).
+		Delete(&models.UserSegment{}).
+		Error
 }

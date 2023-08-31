@@ -1,10 +1,16 @@
+FROM golang:1.20 AS build
 
-FROM postgres:latest
+WORKDIR /app
 
+COPY go.mod go.sum ./
+RUN go mod download
 
-COPY ./database/database_scripts/dataBaseCreate.sql /docker-entrypoint-initdb.d/
+COPY . .
 
+RUN go build -o main /app/cmd/main/main.go
 
-ENV POSTGRES_USER=postgres
-ENV POSTGRES_PASSWORD=postgres
-ENV POSTGRES_DB=dynamic_segment_service_db
+FROM debian:buster-slim
+
+COPY --from=build /app/main /app/main
+
+CMD ["/app/main"]

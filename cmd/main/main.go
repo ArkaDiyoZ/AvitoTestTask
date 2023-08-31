@@ -1,10 +1,12 @@
 package main
 
 import (
-	"DynamicUserSegmentationService/database"
-	"DynamicUserSegmentationService/handlers"
+	"DynamicUserSegmentationService/internal/config"
+	"DynamicUserSegmentationService/internal/handlers"
 	"DynamicUserSegmentationService/internal/repository"
+	"DynamicUserSegmentationService/internal/scheduler"
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/swag/example/override/docs"
 	"log"
 	"os"
 )
@@ -13,7 +15,7 @@ func main() {
 
 	logger := log.New(os.Stdout, "log:: ", log.LstdFlags)
 
-	db := database.Connection(logger)
+	db := config.Connection(logger)
 	if db != nil {
 		logger.Printf("\nConnected to database")
 	}
@@ -21,6 +23,12 @@ func main() {
 	userRepository := repository.NewUserRepository(db)
 	segmentRepository := repository.NewSegmentRepository(db)
 	historyRepository := repository.NewHistoryRepository(db)
+
+	go scheduler.StartSegmentCleanupRoutine(userRepository, logger)
+
+	//historyService := service.NewHistoryService(historyRepository)
+
+	//reportHandler := handlers.Report{historyService}
 
 	router := gin.Default()
 	router.POST("/segments", func(context *gin.Context) {
@@ -48,6 +56,8 @@ func main() {
 		handlers.GenerateReportHandler(context, historyRepository)
 	})
 
-	router.Run(":8080")
-
+	//router.GET("/history", reportHandler.HandlerHistory)
+	router.GET("/swagger/*any", gin.WrapHandler(swaggerFiles.Handler))
+	router.Run(":8081")
+	docs.SwaggerInfo.Title = "Dynamic User Segmentation Service"
 }

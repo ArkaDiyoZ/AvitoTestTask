@@ -1,8 +1,8 @@
 package service
 
 import (
+	"DynamicUserSegmentationService/internal/models"
 	"DynamicUserSegmentationService/internal/repository"
-	"DynamicUserSegmentationService/models"
 )
 
 type SegmentService struct {

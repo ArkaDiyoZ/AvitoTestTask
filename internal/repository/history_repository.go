@@ -1,7 +1,8 @@
 package repository
 
 import (
-	"DynamicUserSegmentationService/models"
+	"DynamicUserSegmentationService/internal/models"
+	"fmt"
 	"gorm.io/gorm"
 	"time"
 )
@@ -18,7 +19,7 @@ func (r *HistoryRepository) GetRecordsForPeriod(start time.Time, end time.Time) 
 	var historyRecords []models.History
 	if err := r.db.Table("history").Where("timestamp >= ? AND timestamp <= ?", start, end).
 		Find(&historyRecords).Error; err != nil {
-		return nil, err
+		return nil, fmt.Errorf("historyRepository: %w", err) // везде прокинуть
 	}
 	return historyRecords, nil
 }

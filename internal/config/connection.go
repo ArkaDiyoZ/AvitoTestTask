@@ -1,7 +1,6 @@
-package database
+package config
 
 import (
-	"DynamicUserSegmentationService/internal/errors"
 	"fmt"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
@@ -28,7 +27,9 @@ func Connection(logger *log.Logger) *gorm.DB {
 
 	dbUrl := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
 	db, err := gorm.Open(postgres.Open(dbUrl), &gorm.Config{})
-	errors.ErrorPanic(err)
+	if err != nil {
+		panic(err)
+	}
 
 	return db
 }
