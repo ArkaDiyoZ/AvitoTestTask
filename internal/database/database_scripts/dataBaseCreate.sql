@@ -20,5 +20,5 @@ CREATE TABLE history (
                          user_id INT REFERENCES users(id) ON DELETE CASCADE,
                          segment_id INT REFERENCES segments(id),
                          operation VARCHAR(255) NOT NULL,
-                         timestamp TIMESTAMPTZ DEFAULT NOW()
+                         created_time TIMESTAMPTZ DEFAULT NOW()
 );
